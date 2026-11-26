@@ -1,0 +1,46 @@
+# Runs MySQL + backend + frontend together. Usage:  cp .env.example .env  (edit it)  then  docker compose up -d --build
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: inventory_db
+      TZ: Asia/Kolkata
+    volumes:
+      - dbdata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:mysql://db:3306/inventory_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      SEED_SAMPLE_DATA: ${SEED_SAMPLE_DATA:-false}
+      SHOP_NAME: ${SHOP_NAME:-My Shop}
+      SHOP_ADDRESS: ${SHOP_ADDRESS:-}
+      SHOP_PHONE: ${SHOP_PHONE:-}
+      SHOP_GSTIN: ${SHOP_GSTIN:-}
+      JAVA_OPTS: "-Xmx700m -XX:+UseSerialGC"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  dbdata:

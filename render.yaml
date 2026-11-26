@@ -1,0 +1,26 @@
+# Render Blueprint for the backend (Option A). Frontend goes on Netlify, database on TiDB Cloud (see DEPLOY.md).
+services:
+  - type: web
+    name: inventory-billing-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    autoDeploy: false        # deploys are triggered by GitHub Actions after CI passes
+    envVars:
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: SEED_SAMPLE_DATA
+        value: "false"
+      - key: SHOP_NAME
+        sync: false
